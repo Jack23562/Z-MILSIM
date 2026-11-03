@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Z-MILSIM | Loading</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0e0b09;
+    --surface:   #15100d;
+    --z-orange:  #c8512a;
+    --text:      #e8e0d8;
+    --muted:     #7a6f67;
+    --line:      #2a211b;
+    --progress:  #c8512a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── BACKGROUND city silhouette ── */
+  .bg-city {
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(to bottom, rgba(14,11,9,0) 30%, rgba(14,11,9,0.92) 80%, #0e0b09 100%),
+      linear-gradient(160deg, rgba(120,40,10,0.18) 0%, transparent 60%);
+    z-index: 0;
+  }
+
+  /* SVG city skyline */
+  .city-svg {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    width: 100%; height: 55%;
+    opacity: 0.18;
+    z-index: 0;
+  }
+
+  /* scanline overlay */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.07) 2px,
+      rgba(0,0,0,0.07) 4px
+    );
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ── LAYOUT ── */
+  .shell {
+    position: relative;
+    z-index: 2;
+    width: 100%; height: 100vh;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    padding: 48px 56px 40px;
+  }
+
+  /* ── BRAND ── */
+  .brand {
+    align-self: start;
+  }
+
+  .brand-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: clamp(52px, 8vw, 88px);
+    letter-spacing: -0.01em;
+    line-height: 1;
+    color: var(--text);
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+  }
+
+  .brand-logo .z {
+    color: var(--z-orange);
+  }
+
+  .brand-sub {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+    max-width: 340px;
+  }
+
+  /* ── CONTENT PANEL (bottom-right) ── */
+  .content {
+    align-self: end;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 48px;
+    align-items: end;
+  }
+
+  /* ── STATUS / WELCOME TEXT ── */
+  .welcome {
+    max-width: 540px;
+  }
+
+  .welcome-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--z-orange);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  .welcome-title {
+    font-size: clamp(18px, 2.2vw, 24px);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .welcome-body {
+    font-size: 13.5px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--muted);
+    max-width: 480px;
+  }
+
+  /* ── LOADING PANEL ── */
+  .load-panel {
+    border-left: 1px solid var(--line);
+    padding-left: 32px;
+  }
+
+  .load-status {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 18px;
+    text-transform: uppercase;
+  }
+
+  .load-status span {
+    color: var(--z-orange);
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 2px;
+    background: var(--line);
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--z-orange);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  /* pulse dot */
+  .pulse-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .pulse-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--z-orange);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .pulse-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.3; transform: scale(0.7); }
+  }
+
+  /* ── CORNER MARKERS ── */
+  .corner {
+    position: fixed;
+    width: 18px; height: 18px;
+    z-index: 3;
+  }
+  .corner::before, .corner::after {
+    content: '';
+    position: absolute;
+    background: var(--z-orange);
+  }
+  .corner::before { width: 100%; height: 1px; top: 0; left: 0; }
+  .corner::after  { width: 1px; height: 100%; top: 0; left: 0; }
+
+  .corner.tl { top: 20px; left: 20px; }
+  .corner.tr { top: 20px; right: 20px; transform: scaleX(-1); }
+  .corner.bl { bottom: 20px; left: 20px; transform: scaleY(-1); }
+  .corner.br { bottom: 20px; right: 20px; transform: scale(-1); }
+
+  /* ── FADE IN ── */
+  .shell { animation: fadein 0.8s ease both; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+  @media (max-width: 700px) {
+    .shell { padding: 32px 24px 28px; }
+    .content { grid-template-columns: 1fr; gap: 28px; }
+    .load-panel { border-left: none; border-top: 1px solid var(--line); padding-left: 0; padding-top: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-city"></div>
+
+<!-- City silhouette SVG -->
+<svg class="city-svg" viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="500" width="1440" height="10" fill="#e8e0d8"/>
+  <!-- buildings -->
+  <rect x="0"   y="280" width="60"  height="220" fill="#e8e0d8"/>
+  <rect x="70"  y="200" width="40"  height="300" fill="#e8e0d8"/>
+  <rect x="120" y="320" width="80"  height="180" fill="#e8e0d8"/>
+  <rect x="210" y="150" width="50"  height="350" fill="#e8e0d8"/>
+  <rect x="214" y="110" width="10"  height="50"  fill="#e8e0d8"/>
+  <rect x="270" y="240" width="70"  height="260" fill="#e8e0d8"/>
+  <rect x="350" y="300" width="55"  height="200" fill="#e8e0d8"/>
+  <rect x="415" y="180" width="90"  height="320" fill="#e8e0d8"/>
+  <rect x="515" y="260" width="40"  height="240" fill="#e8e0d8"/>
+  <rect x="565" y="130" width="60"  height="370" fill="#e8e0d8"/>
+  <rect x="635" y="290" width="75"  height="210" fill="#e8e0d8"/>
+  <rect x="720" y="200" width="50"  height="300" fill="#e8e0d8"/>
+  <rect x="780" y="160" width="85"  height="340" fill="#e8e0d8"/>
+  <rect x="875" y="310" width="45"  height="190" fill="#e8e0d8"/>
+  <rect x="930" y="240" width="65"  height="260" fill="#e8e0d8"/>
+  <rect x="1005" y="170" width="55" height="330" fill="#e8e0d8"/>
+  <rect x="1070" y="280" width="80" height="220" fill="#e8e0d8"/>
+  <rect x="1160" y="210" width="50" height="290" fill="#e8e0d8"/>
+  <rect x="1220" y="290" width="70" height="210" fill="#e8e0d8"/>
+  <rect x="1300" y="180" width="60" height="320" fill="#e8e0d8"/>
+  <rect x="1370" y="260" width="70" height="240" fill="#e8e0d8"/>
+  <!-- windows dots -->
+  <rect x="73"  y="220" width="4" height="4" fill="#0e0b09" opacity="0.6"/>
+  <rect x="83"  y="220" width="4" height="4" fill="#0e0b09" opacity="0.6"/>
+  <rect x="73"  y="234" width="4" height="4" fill="#0e0b09" opacity="0.6"/>
+  <rect x="567" y="150" width="5" height="5" fill="#0e0b09" opacity="0.5"/>
+  <rect x="580" y="150" width="5" height="5" fill="#0e0b09" opacity="0.5"/>
+  <rect x="567" y="165" width="5" height="5" fill="#0e0b09" opacity="0.5"/>
+  <rect x="783" y="185" width="6" height="6" fill="#0e0b09" opacity="0.5"/>
+  <rect x="797" y="185" width="6" height="6" fill="#0e0b09" opacity="0.5"/>
+  <rect x="783" y="200" width="6" height="6" fill="#0e0b09" opacity="0.5"/>
+</svg>
+
+<div class="scanlines"></div>
+
+<!-- Corner markers -->
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<div class="shell">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-logo">
+      <span class="z">Z</span>–MILSIM
+    </div>
+    <div class="brand-sub">The0d IS REAL &nbsp;|&nbsp; European Server</div>
+  </div>
+
+  <!-- Bottom content -->
+  <div class="content">
+
+    <div class="welcome">
+      <div class="welcome-tag">Demo Release</div>
+      <div class="welcome-title">Welcome to Z-MILSIM</div>
+      <p class="welcome-body">
+        A military simulation and roleplay server focused on immersion, realism, and a variety of military RP experiences.
+        Multiple wars, different conflicts, military operations — this is only the beginning.
+        Thank you to everyone who joins and supports the project.
+      </p>
+    </div>
+
+    <div class="load-panel">
+      <div class="load-status">Status &nbsp;<span id="pct">0%</span></div>
+      <div class="progress-track">
+        <div class="progress-bar" id="bar"></div>
+      </div>
+      <div class="load-status" id="stage">Connecting to server...</div>
+      <div class="pulse-row">
+        <div class="pulse-dot"></div>
+        <div class="pulse-label">Z-MILSIM &nbsp;·&nbsp; Military Simulation &amp; Roleplay</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // GMod loading screen API
+  var bar   = document.getElementById('bar');
+  var pct   = document.getElementById('pct');
+  var stage = document.getElementById('stage');
+
+  var stages = [
+    "Connecting to server...",
+    "Downloading resources...",
+    "Loading map...",
+    "Initializing systems...",
+    "Joining session..."
+  ];
+
+  // GMod calls these functions
+  function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+    document.title = servername + ' | Z-MILSIM Loading';
+  }
+
+  function SetStatusChanged(status) {
+    stage.textContent = status;
+  }
+
+  function DownloadingFile(filename) {
+    stage.textContent = 'Downloading: ' + filename;
+  }
+
+  function SetFilesTotal(total) { }
+  function SetFilesNeeded(needed) { }
+
+  function LoadingProgressChanged(progress) {
+    var p = Math.round(progress * 100);
+    bar.style.width = p + '%';
+    pct.textContent = p + '%';
+    var idx = Math.min(Math.floor(progress * stages.length), stages.length - 1);
+    stage.textContent = stages[idx];
+  }
+
+  // Preview animation if not in GMod
+  if (!window.GameDetails) {
+    var p = 0;
+    var iv = setInterval(function() {
+      p += Math.random() * 3;
+      if (p >= 100) { p = 100; clearInterval(iv); stage.textContent = 'Ready.'; }
+      var frac = p / 100;
+      bar.style.width = p.toFixed(0) + '%';
+      pct.textContent  = p.toFixed(0) + '%';
+      var idx = Math.min(Math.floor(frac * stages.length), stages.length - 1);
+      stage.textContent = stages[idx];
+    }, 80);
+  }
+</script>
+</body>
+</html>
